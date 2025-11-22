@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import katex from 'katex';
 import { KATEX_MACROS } from '../constants';
 
@@ -9,25 +9,28 @@ interface MathRendererProps {
 }
 
 export const MathRenderer: React.FC<MathRendererProps> = ({ latex, block = false, className = '' }) => {
-  const containerRef = useRef<HTMLSpanElement>(null);
+  try {
+    const html = katex.renderToString(latex, {
+      throwOnError: false,
+      displayMode: block,
+      macros: KATEX_MACROS,
+      trust: true // Allow some basic styling commands
+    });
 
-  useEffect(() => {
-    if (containerRef.current) {
-      try {
-        katex.render(latex, containerRef.current, {
-          throwOnError: false,
-          displayMode: block,
-          macros: KATEX_MACROS,
-          trust: true // Allow some basic styling commands
-        });
-      } catch (e) {
-        console.error("KaTeX render error:", e);
-        containerRef.current.innerText = latex;
-      }
-    }
-  }, [latex, block]);
-
-  return <span ref={containerRef} className={`${className} ${block ? 'block my-4 overflow-x-auto py-2' : 'inline'}`} />;
+    return (
+      <span 
+        className={`${className} ${block ? 'block my-4 overflow-x-auto py-2' : 'inline'}`}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    );
+  } catch (e) {
+    console.error("KaTeX render error:", e);
+    return (
+      <span className={`${className} ${block ? 'block my-4 overflow-x-auto py-2' : 'inline'}`}>
+        {latex}
+      </span>
+    );
+  }
 };
 
 // Helper to render mixed text and inline math
